@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            helloworld
+        </title>
+        <link rel='stylesheet' href='/stylesheets/style.css'/>
+      
+        </head>
+
+    <body onmousedown="draw_line(event)">
+ 
+
+        <canvas id="myCanvas" width="400" height="300" 
+        style="border:1px solid #d3d3d3;"></canvas>
+           
+           
+        <script>
+        var element=document.getElementById("div1");
+
+            var c=document.getElementById("myCanvas");
+            var ctx=c.getContext("2d");
+            ctx.beginPath();
+            ctx.strokeStyle="#0000FF";
+            ctx.moveTo(100,100);
+            ctx.lineTo(300,150);
+            ctx.stroke();
+
+            var c=document.getElementById("myCanvas");
+            var ctx=c.getContext("2d");
+            ctx.strokeStyle="#FF0000";
+            ctx.strokeRect(20,20,150,100);
+
+            var c=document.getElementById("myCanvas");
+            var ctx=c.getContext("2d");
+            ctx.fillRect(10,10,100,50);
+            
+        </script>
+
+    </body>
+</html>
