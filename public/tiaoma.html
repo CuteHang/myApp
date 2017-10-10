@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            tiaoma
+        </title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <style></style>
+    </head>
+
+    <body>
+
+            <p align="center">请输入横坐标最大值：<input type="text" id = "m" /><br><br>  </p>
+            <p align="center">请输入纵坐标最大值：<input type="text" id = "n" /><br><br> </p>
+                
+            <p align="center">请输入初始位置横坐标：<input type="text" id = "x0" /><br><br>  </p>
+            <p align="center">请输入初始位置横坐标：<input type="text" id = "y0" /><br><br>  </p>
+                  
+            <center><input  type="button" value="提交"  onclick = "run()"><br></center> 
+
+        <div id="trace"/>
+        <script>
+            
+            var dx = [1, 1,2, 2,-1,-1,-2,-2];//方向
+            var dy = [2,-2,1,-1, 2,-2, 1,-1];           
+            var m;//最大横坐标
+            var n;//最大纵坐标
+            var x0;//初始位置
+            var y0;
+
+            function judge(x,y)
+            {
+                if(x<0 || y<0 || x>m || y>n){
+                    return false;
+                }
+                return true;
+            }
+            
+            function jump(x,y,chessboard,xpath,ypath)
+            {
+                var newchessboard=new Array(chessboard.length);
+                for(var i=0;i<chessboard.length;i++){
+                    newchessboard[i]=chessboard[i];
+                }
+                var pathx = new Array(xpath.length);
+                            var pathy = new Array(ypath.length);
+                            for(var i=0;i<xpath.length;i++)
+                            {
+                                pathx[i]=xpath[i];
+                                pathy[i]=ypath[i];
+                            }
+                for(i=0;i<8;i++)
+                {
+                    var tempx=x+dx[i];
+                    var tempy=y+dy[i];
+                    if(judge(tempx,tempy))//没有出边界
+                    {
+                        if(newchessboard[tempy+tempx*(m+1)]==0)//没有走过
+                        {
+ 
+                            pathx.push(tempx);
+                            pathy.push(tempy);
+                            newchessboard[tempy+tempx*(m+1)]=1;
+                            if(tempx==x0 && tempy==y0)//返回原点
+                            {
+                                trace=document.getElementById("trace");
+                                for(var i=0;i<pathx.length;i++)
+                                {
+                                    trace.innerText+=("("+pathx[i]+","+pathy[i]+")"+"-->");
+                                }
+                                trace.innerHTML+="<Br/>";
+                            }
+                            else
+                            {
+                                jump(tempx,tempy,newchessboard,pathx,pathy);
+                            }
+                        }
+                                       
+                    }
+                   
+                }
+            }
+            function run(){
+                var x=new Array();   
+                m=parseInt(document.getElementById("m").value);
+                n=parseInt(document.getElementById("n").value);
+                x0=parseInt(document.getElementById("x0").value);
+                y0=parseInt(document.getElementById("y0").value);
+                var y=new Array();
+                x[0]=x0;
+                y[0]=y0;
+                var chessboard=new Array((m+1)*(n+1));//一维棋盘
+                for(var i=0;i<chessboard.length;i++){
+                    chessboard[i]=0;
+                }
+                
+                jump(x0,y0,chessboard,x,y);
+            }
+                
+    
+        </script>
+
+    </body>
+</html>
