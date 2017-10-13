@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            helloworld
+        </title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        </head>
+
+    <body>
+        <div id="div1"/>
+
+        <p align="center">请输入工作总数：<input type="text" id = "n" /><br><br>  </p>
+        <p align="center">请按顺序输入任务序号：<input type="text" id = "mark" /><br><br> </p>  
+        <p align="center">请按顺序输入任务费时：<input type="text" id = "cost" /><br><br>  </p>
+        <p align="center">请按顺序输入任务期限：<input type="text" id = "deadline" /><br><br>  </p>
+        <p align="center">请按顺序输入任务价值：<input type="text" id = "value" /><br><br>  </p>
+              
+        <center><input  type="button" value="提交"  onclick = "run()"><br></center> 
+
+        <script>
+            //var num=4;//工作总数
+            var num;
+            var amark=new Array();
+            var acost=new Array();
+            var adeadline=new Array();
+            var avalue=new Array();
+            
+            
+            function run()
+            {
+                num=parseInt(document.getElementById("n").value);
+
+                amark=document.getElementById("mark").value.split(",");
+                acost=document.getElementById("cost").value.split(",");
+                adeadline=document.getElementById("deadline").value.split(",");
+                avalue=document.getElementById("value").value.split(",");
+                
+                var list = new Array();  //声明一维
+                for(var i=0;i<4;i++)//一维长度为4
+                {     
+                    list[i]=new Array(); //声明二维
+                    /*for(var j=0;j<num;j++)//二维长度为工作数目
+                    {    
+                        list[i][j]=0;    //初始化为空
+                    }*/
+                }
+                
+                for(var i=0;i<4;i++)// 赋值
+                {                  
+                    for(var j=0;j<num;j++)
+                    {  
+                        list[0][j]=parseInt(amark[j]); 
+                        list[1][j]=parseInt(acost[j]);
+                        list[2][j]=parseInt(adeadline[j]);
+                        list[3][j]=parseInt(avalue[j]);
+                    }
+                }
+                //alert(list);
+                array(list);
+                chose(list);
+                
+            }  
+
+            function array(arr)//由小到大排序
+            {
+
+               
+                for (var i = 0; i < num; i++)
+                {
+                    for (var j = 0; j < num - 1 - i; j++) 
+                    {
+                        if (arr[2][j] > arr[2][j+1]) // 对比deadline
+                        {   
+                            for(var k=0;k<4;k++) // 交换所有
+                            {
+                                var temp = arr[k][j+1];        
+                                arr[k][j+1] = arr[k][j];
+                                arr[k][j] = temp;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            function chose(arr)
+            {
+                for(var i=num;i>0;i--)
+                {
+                    var cost=0;
+                    var l = new Array();  //存储序列
+                    var svalue=0;//总价值
+                    
+                    for(var k=i;k>0;k--)
+                    {
+                        cost=cost+arr[1][k];
+                    }
+
+                    if(arr[2][i]-cost>0)//判断是否可以在期限内完成
+                    {
+                        for(var j=0;j<num;j++)
+                        {
+                            l[j]=arr[0][j];
+                            svalue=svalue+arr[3][j];
+                        }
+                        document.write("最佳工作序列：");
+                        for(var k=0;k<l.length;k++)//输出序列
+                        {
+                            document.write(l[k]+" ");
+                        }
+                        document.write("总价值："+svalue+"<br>");
+                        break;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+            }
+/*
+            function putout(arr)
+            {
+                for(var i=0;i<arr.length;i++)
+                {
+                    for(var j=0;j<arr[i].length;j++)
+                    {
+                        document.write(arr[i][j]);
+                    }
+                    document.write("<br/>");  
+                }
+            }
+*/
+        </script>
+
+    </body>
+</html>
