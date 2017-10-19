@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            transname
+        </title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <style>
+        canvas
+        {
+            margin: 10px;
+            border: 1px solid #000000;
+            display:inline;
+        }
+   
+    </style>
+
+    </head>
+
+    <body>
+        <input type="file" name="files" value="选择文件" id="path"/>
+        <form>
+            <select id="style">
+            <option value="normal">标准字体</option>
+            <option value="backhand">左斜体</option>
+            <option value="shoulder">耸肩体</option>
+            <option value="proportion">缩小一倍</option>
+            <option value="whirl">顺时针旋转90°</option>
+            <option value="symmetry">左右翻转</option>
+            <option value="move">向右平移</option>
+            </select>
+            </form>
+        <input type="button" value="提交" onclick="onChange(event)"/>
+        <br>
+
+        <canvas style="width:320px;height:320px;" id="1"></canvas >
+        <canvas style="width:320px;height:320px;" id="2"></canvas >
+        <div id="aa"></div>
+
+        <script>
+            function drawbackground()
+            {
+                var canvas = document.getElementById("1");//画布位置
+                canvas.width = 320;
+                canvas.height =320;
+
+                var ctx = canvas.getContext("2d"),
+                width = canvas.width,
+                height = canvas.height;
+                ctx.lineWidth = 1;
+                ctx.clearRect(0,0,canvas.width,canvas.height);//清空画布
+
+                for( var i = 1; i * 20 < height; i++ )//先画横线
+                {
+                    ctx.beginPath();
+                    ctx.moveTo(0,i * 20);
+                    ctx.lineTo(width,i* 20);
+                    ctx.stroke();
+                }
+                for( var j = 1; j * 20 < width; j++ )//再画纵线
+                {
+                    ctx.beginPath();
+                    ctx.moveTo(j * 20, 0);
+                    ctx.lineTo(j * 20, height);
+                    ctx.stroke();
+                }
+                var canvas = document.getElementById("2");//画布位置
+                canvas.width = 320;
+                canvas.height =320;
+
+                var ctx = canvas.getContext("2d"),
+                width = canvas.width,
+                height = canvas.height;
+                ctx.lineWidth = 1;
+
+                for( var i = 1; i * 20 < height; i++ )//先画横线
+                {
+                    ctx.beginPath();
+                    ctx.moveTo(0,i * 20);
+                    ctx.lineTo(width,i* 20);
+                    ctx.stroke();
+                }
+                for( var j = 1; j * 20 < width; j++ )//再画纵线
+                {
+                    ctx.beginPath();
+                    ctx.moveTo(j * 20, 0);
+                    ctx.lineTo(j * 20, height);
+                    ctx.stroke();
+                }
+            }
+            
+            drawbackground();
+            function onChange(event) 
+            {
+                drawbackground();
+                var file=document.getElementById("path").files;
+                var myfile = file[0];
+                var reader = new FileReader();
+                reader.readAsText(myfile);
+                var content = null;
+                reader.onload = function(event) 
+                {
+                    content=this.result;  
+                    //document.getElementById("aa").innerHTML=content;
+                    draw(content);
+                }
+            }  
+
+            function draw(content)
+            {
+                var text=content.split("\r\n");
+                var num=0;//序号
+                var sum1=text[0];
+                var sum2=text[1];
+                var p=0;
+                var canvas = document.getElementById("1");//画布位置
+
+                if(canvas.getContext)
+                {  
+                    var ctx = canvas.getContext("2d");
+                    for(var i=2;i<text.length;i++)
+                    {
+                        var now=text[i];
+                        if(now.length<=2)//读到序号
+                        {
+                            continue;
+                        }
+
+                    if(now=="END")
+                    {
+                        ctx.stroke();//关闭当前的绘制路径
+                    num++;
+                    p=0;
+                    if(num<sum1){
+                        continue;
+                    }
+                    else
+                    var canvas = document.getElementById("2");//第二个字
+                    var ctx = canvas.getContext("2d");
+                    continue;
+                    }
+    
+                    else
+                    {
+                        if(document.getElementById("style").value=="normal")//等线体
+                        {
+                            var point=now.split(",");
+                            if(p==0)
+                            {
+                                ctx.beginPath();
+                                ctx.strokeStyle="blue";
+                                ctx.lineWidth=3;
+                                ctx.moveTo(point[0]*20,point[1]*20);
+                                p=1;
+                                continue;
+                            }
+                            if(p==1){
+                                ctx.lineTo(point[0]*20,point[1]*20);
+                            }
+                        }
+                        if(document.getElementById("style").value=="backhand")//左斜体
+                        {
+                            var point=now.split(",");
+                            point[0]=(point[0]-8)-(8-point[1])*(Math.tan(15/180*Math.PI))+8;
+                            
+                            if(p==0)
+                            {
+                                ctx.beginPath();
+                                ctx.strokeStyle="blue";
+                                ctx.lineWidth=3;
+                                ctx.moveTo(point[0]*20,point[1]*20);
+                                p=1;
+                                continue;
+                            }
+                            if(p==1){
+                                ctx.lineTo(point[0]*20,point[1]*20);
+                            }
+                        }
+                        if(document.getElementById("style").value=="shoulder")//耸肩体
+                        {
+                            var point=now.split(",");
+
+                            point[1]=8-((8-point[1])-(8-point[0])*(Math.tan(15/180*Math.PI)));
+                            
+                            if(p==0)
+                            {
+                                ctx.beginPath();
+                                ctx.strokeStyle="blue";
+                                ctx.lineWidth=3;
+                                ctx.moveTo(point[0]*20,point[1]*20);
+                                p=1;
+                                continue;
+                            }
+                            if(p==1){
+                                ctx.lineTo(point[0]*20,point[1]*20);
+                            }
+                        }
+                        if(document.getElementById("style").value=="proportion")//比例变换
+                        {
+                            var point=now.split(",");
+                            
+                            point[0]=(point[0]-8)*0.5+8;
+                            point[1]=8-(8-point[1])*0.5;
+
+                            if(p==0)
+                            {
+                                ctx.beginPath();
+                                ctx.strokeStyle="blue";
+                                ctx.lineWidth=3;
+                                
+                                ctx.moveTo(point[0]*20,point[1]*20);
+                                p=1;
+                                continue;
+                            }
+                            if(p==1){
+                                ctx.lineTo(point[0]*20,point[1]*20);
+                            }
+                        }
+                        if(document.getElementById("style").value=="whirl")//旋转
+                        {
+                            
+                            var point=now.split(",");
+
+                            var t=point[0];
+                            point[0]=(8-point[1])+8;
+                            point[1]=8-(-(t-8));
+
+                            if(p==0)
+                            {
+                                ctx.beginPath();
+                                ctx.strokeStyle="blue";
+                                ctx.lineWidth=3;
+                                ctx.moveTo(point[0]*20,point[1]*20);
+                                p=1;
+                                continue;
+                            }
+                            if(p==1){
+                                ctx.lineTo(point[0]*20,point[1]*20);
+                            }
+                        }
+                        if(document.getElementById("style").value=="symmetry")//对称
+                        {
+                            var point=now.split(",");
+                            if(p==0)
+                            {
+                                ctx.beginPath();
+                                ctx.strokeStyle="blue";
+                                ctx.lineWidth=3;
+                                ctx.moveTo(320-point[0]*20,point[1]*20);
+                                p=1;
+                                continue;
+                            }
+                            if(p==1){
+                                ctx.lineTo(320-point[0]*20,point[1]*20);
+                            }
+                        }
+                        if(document.getElementById("style").value=="move")//平移
+                        {
+                            var point=now.split(",");
+                            if(p==0)
+                            {
+                                ctx.beginPath();
+                                ctx.strokeStyle="blue";
+                                ctx.lineWidth=3;
+                                ctx.moveTo(point[0]*20+40,point[1]*20);
+                                p=1;
+                                continue;
+                            }
+                            if(p==1){
+                                ctx.lineTo(point[0]*20+40,point[1]*20);
+                            }
+                        }
+        
+                    }
+
+                }
+            }
+        }
+
+        </script>
+
+    </body>
+</html>
