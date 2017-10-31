@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            mymap
+        </title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <style>
+        canvas
+        {
+            margin: 10px;
+            border: 1px solid #000000;
+            display:inline;
+        }
+        </style>
+
+        </head>
+
+    <body>
+        
+        <input type="file" name="files" value="选择地图文件" id="path"/>
+        <a>选择投影：</a>
+        
+        <select id="style">
+        <option value="A">初始投影</option>
+        <option value="L">兰伯特投影</option>
+        <option value="M">墨卡托投影</option>
+        </select>
+        
+        <input type="button" value="提交" onclick="onChange()"/>
+        <input type="button" value="绘制大圆航线" onclick="drawroute()"/>
+        <br>
+    
+        <canvas style="width:900px;height:800px;" id="1"></canvas >
+        
+
+        <script>
+            var e2,e02;//第一、二偏心率平方
+            var a;//长半径
+            var b;//短半径
+            var mypath;//判断文件
+            var mystyle;//判断投影
+            var point = new Array ;//航线所有点坐标
+
+            var canvas = document.getElementById('1');
+            var ctx = canvas.getContext('2d');
+            canvas.width = 900;
+            canvas.height = 800;
+
+               function onChange(event) 
+            {
+                ctx.clearRect(0,0,canvas.width,canvas.height);//清空画布
+                var file=document.getElementById("path").files;
+                var myfile = file[0];
+                if(file[0].name=="country.gen")
+                {//WGS84
+                    a = 6378137; 
+                    b = 6356752.3142;
+                    e2 = 0.00669437999013;
+                    e02 = 0.006739496742227;
+                    mypath = 1;
+                }
+                else
+                {//北京54
+                    a=6378245;
+                    b=6356863.0188;
+                    e=0.006693421622;
+                    mypath = 0;
+                }
+                mystyle = document.getElementById("style").value;
+
+                var reader = new FileReader();
+                reader.readAsText(myfile);
+                var content = null;
+                reader.onload = function(event) 
+                {
+                    var canvas = document.getElementById("1");//画布位置
+
+                if(document.getElementById("style").value=="A")
+                {
+                    for( var i = 0; i * 5 <=360; i++ )//先画纵线
+                    {
+                        for( var j = 0; j * 5 < 180; j++ )
+                        {
+                            ctx.beginPath();
+                            ctx.strokeStyle = "grey";
+                            var point1 = [i*5,j*5];
+                            var point2 = [i*5,j*5+5];
+                            ctx.moveTo(point1[0]*2,point1[1]*2);
+                            ctx.lineTo(point2[0]*2,point2[1]*2);
+                            ctx.stroke();
+                        }
+                    }
+                    for( var j = 1; j * 5 <=180; j++ )//再画横线
+                    {
+                        for( var i = 0; i * 5 < 360; i++ )
+                        {
+                            ctx.beginPath();
+                            ctx.strokeStyle = "grey";
+                            var point1 = [i*5,j*5];
+                            var point2 = [i*5+5,j*5];
+                            ctx.moveTo(point1[0]*2,point1[1]*2);
+                            ctx.lineTo(point2[0]*2,point2[1]*2);
+                            ctx.stroke();
+                        }
+                    }
+                }
+                else if(document.getElementById("style").value=="L")
+                {
+                    for( var i = -36; i * 5 <=180; i++ )//先画纵线
+                    {
+                        for( var j = -18; j * 5 < 900; j++ )
+                        {
+                            ctx.beginPath();
+                            ctx.strokeStyle = "grey";
+                            var point1 = [i*5,j*5];
+                            var point2 = [i*5,j*5+5];
+                            var pointl1 = L(point1[0],point1[1]);
+                            var pointl2 = L(point2[0],point2[1]);
+
+                            pointl1[0] = 180+pointl1[0]/100000;
+                            pointl1[1] = 90-pointl1[1]/100000+100;
+                            pointl2[0] = 180+pointl2[0]/100000;
+                            pointl2[1] = 90-pointl2[1]/100000+100;
+
+                            ctx.moveTo(pointl1[0]*2,pointl1[1]*2);
+                            ctx.lineTo(pointl2[0]*2,pointl2[1]*2);
+                            ctx.stroke();
+                        }
+                    }
+                    for( var j = -18; j * 5 <= 90; j++ )//再画横线
+                    {
+                        for( var i = -36; i * 5 < 180; i++ )
+                        {
+                            ctx.beginPath();
+                            ctx.strokeStyle = "grey";
+                            var point1 = [i*5,j*5];
+                            var point2 = [i*5+5,j*5];
+                            var pointl1 = L(point1[0],point1[1]);
+                            var pointl2 = L(point2[0],point2[1]);
+
+                            pointl1[0] = 180+pointl1[0]/100000;
+                            pointl1[1] = 90-pointl1[1]/100000+100;
+                            pointl2[0] = 180+pointl2[0]/100000;
+                            pointl2[1] = 90-pointl2[1]/100000+100;
+
+                            ctx.moveTo(pointl1[0]*2,pointl1[1]*2);
+                            ctx.lineTo(pointl2[0]*2,pointl2[1]*2);
+                            ctx.stroke();
+                        }
+                    }
+                }
+                else if(document.getElementById("style").value=="M")
+                {
+                    for( var i = -36; i * 5 <=180; i++ )//先画纵线
+                    {
+                        for( var j = -18; j * 5 < 89; j++ )
+                        {
+                            ctx.beginPath();
+                            ctx.strokeStyle = "grey";
+                            //var point1 = [i*5,j*5];
+                            //var point2 = [i*5,j*5+5];
+                            var pointm1 = M(i*5,j*5);
+                            var pointm2 = M(i*5,j*5+5);
+
+                            pointm1[0] = 180+pointm1[0]/100000+50;
+                            pointm1[1] = 90-pointm1[1]/100000+100; 
+                            pointm2[0] = 180+pointm2[0]/100000+50;
+                            pointm2[1] = 90-pointm2[1]/100000+100; 
+
+                            ctx.moveTo(pointm1[0]*2,pointm1[1]*2);
+                            ctx.lineTo(pointm2[0]*2,pointm2[1]*2);
+                            ctx.stroke();
+                        }
+                    }
+                    for( var j = -18; j * 5 <=89; j++ )//再画横线
+                    {
+                        for( var i = -36; i * 5 < 180; i++ )
+                        {
+                            ctx.beginPath();
+                            ctx.strokeStyle = "grey";
+                            var point1 = [i*5,j*5];
+                            var point2 = [i*5+5,j*5];
+                            var pointm1 = M(point1[0],point1[1]);
+                            var pointm2 = M(point2[0],point2[1]);
+
+                            pointm1[0] = 180+pointm1[0]/100000+50;
+                            pointm1[1] = 90-pointm1[1]/100000+100; 
+                            pointm2[0] = 180+pointm2[0]/100000+50;
+                            pointm2[1] = 90-pointm2[1]/100000+100; 
+
+                            ctx.moveTo(pointm1[0]*2,pointm1[1]*2);
+                            ctx.lineTo(pointm2[0]*2,pointm2[1]*2);
+                            ctx.stroke();
+                        }
+                    }
+                } 
+                    //drawbackground();
+                    //background(mypath, mystyle)
+                    content=this.result;  
+                    //document.getElementById("aa").innerHTML=content;
+                    draw(content);
+                }
+            }
+
+
+            function draw(content)
+            {
+                var text=content.split("\r\n");
+                var num=0;//序号
+                var p=0;
+                var canvas = document.getElementById("1");//画布位置
+
+                if(canvas.getContext)
+                {  
+          
+                    var ctx = canvas.getContext("2d");
+
+                    for(var i=0;i<text.length;i++)
+                    {
+                        var now=text[i];
+                        if(now.length<=2)//读到序号
+                        {
+                            continue;
+                        }
+
+                        if(now=="END")
+                        {
+                            ctx.stroke();//关闭当前的绘制路径
+                            num++;
+                            p=0;
+                            continue;
+                        }
+                    
+                        else
+                        {
+                            var point=now.split(",");
+                            
+                            if(document.getElementById("style").value=="A")
+                            {
+                                
+                                point[0] = 180 + parseFloat(point[0]);
+                                point[1] = 90 - parseFloat(point[1]);
+                                if(p==0)
+                            {
+                                ctx.beginPath();
+                                ctx.strokeStyle="blue";
+                                ctx.lineWidth=1;
+                                ctx.moveTo(point[0] * 2,point[1] * 2);
+                                p=1;
+                                continue;
+                            }
+                            if(p==1){
+                            ctx.lineTo(point[0] * 2,point[1] * 2);
+                            }
+                        
+                            }
+                            else if(document.getElementById("style").value=="L")
+                            {
+                                point[0] =  parseFloat(point[0]);
+                                point[1] = parseFloat(point[1]);
+                                var pointl = L(point[0],point[1]);
+                                pointl[0] = 180+pointl[0]/100000;
+                                pointl[1] = 90-pointl[1]/100000+100;
+
+                                if(p==0)
+                            {
+                                ctx.beginPath();
+                                ctx.strokeStyle="blue";
+                                ctx.lineWidth=1;
+                                ctx.moveTo(pointl[0] * 2,pointl[1] * 2);
+                                p=1;
+                                continue;
+                            }
+                            if(p==1){
+                            ctx.lineTo(pointl[0] * 2,pointl[1] * 2);
+                            }
+                        
+                            }
+                            else if(document.getElementById("style").value=="M")
+                            {
+                                point[0] =  parseFloat(point[0]);
+                                point[1] = parseFloat(point[1]);
+                                var pointm = M(point[0],point[1]);
+                                pointm[0] = 180+pointm[0]/100000+50;
+                                pointm[1] = 90-pointm[1]/100000+100;
+
+                                if(p==0)
+                            {
+                                ctx.beginPath();
+                                ctx.strokeStyle="blue";
+                                ctx.lineWidth=1;
+                                ctx.moveTo(pointm[0] * 2,pointm[1] * 2);
+                                p=1;
+                                continue;
+                            }
+                            if(p==1){
+                            ctx.lineTo(pointm[0] * 2,pointm[1] * 2);
+                            }
+                        
+                            }
+
+                        }
+
+                    }
+                }
+            }   
+
+            function L(L,B)//兰伯特投影转换
+            {
+                var b0 = 0;  //原点纬度
+                var b1 = 20 * Math.PI / 180; //第一标准纬线
+                var b2 = 40 * Math.PI / 180; //第二标准纬线
+                var l0 = 105 * Math.PI / 180;  //原点经度
+                var e=Math.sqrt(e2);
+
+                B = B * Math.PI / 180;
+                L = L * Math.PI / 180;
+            
+                var X,Y;
+                var r0,r,xita;
+                
+                var m = Math.cos(B) / Math.sqrt(1 - e2 * Math.sin(B) * Math.sin(B));
+                var t = Math.tan(Math.PI / 4 - B / 2) / Math.pow(((1 - e * Math.sin(B)) / (1 + e * Math.sin(B))), e / 2);
+
+                var mb1 = Math.cos(b1) / Math.sqrt(1 - e2 * Math.sin(b1) * Math.sin(b1));
+                var mb2 = Math.cos(b2) / Math.sqrt(1 - e2 * Math.sin(b2) * Math.sin(b2));
+                var tb1 = Math.tan(Math.PI / 4 - b1 / 2) / Math.pow(((1 - e * Math.sin(b1)) / (1 + e * Math.sin(b1))), e / 2);
+                var tb2 = Math.tan(Math.PI / 4 - b2 / 2) / Math.pow(((1 - e * Math.sin(b2)) / (1 + e * Math.sin(b2))), e / 2);
+                
+                var n = Math.log(mb1 / mb2) / Math.log(tb1 / tb2);
+
+                var F = mb1 / (n * Math.pow(tb1, n));
+
+                var r = a * F * Math.pow(t, n);
+
+                xita = n * (L - l0);
+
+                var t0 = Math.tan(Math.PI / 4 - b0 / 2) / Math.pow((1 - e * Math.sin(b0)) / (1 + e * Math.sin(b0)), e / 2);
+                r0 = a * F * Math.pow(t0, n);
+
+                X= r0 - r * Math.cos(xita);
+                Y= r * Math.sin(xita);
+
+                return [Y,X];
+            } 
+
+            function M(L,B)//墨卡托投影转换
+            {
+                var B0 = 0;//标准维度
+                var L0 = 0;//原点经度
+                var X,Y,K;
+                var e=Math.sqrt(e2)
+
+                B = B * Math.PI / 180;
+                L = L * Math.PI / 180;
+            
+                K = (a * a / b) / Math.sqrt(1 + e02 * Math.cos(B0) * Math.cos(B0)) * Math.cos(B0);
+                X = K * Math.log( Math.tan(Math.PI / 4 + B / 2) * Math.pow(((1 - e * Math.sin(B)) / (1 + e * Math.sin(B))), e / 2) );
+                Y = K * (L - L0);
+                return [Y,X];
+            }
+
+            function drawroute()
+            {
+                var ax = 116.4; //起点经纬度
+                var ay = 39.8;
+                var bx = 2.2;   //终点经纬度
+                var by = 48.52;
+
+                var canvas = document.getElementById("1");//画布位置
+                if(canvas.getContext)
+                {
+                    var ctx = canvas.getContext("2d");
+                }
+
+                routepoint(ax,ay,bx,by);
+
+                for (var i = 0; i < point.length; i++)//排序
+                {
+                    for (var j = i+1; j < point.length; j++) 
+                    {
+                        if (point[i][0] < point[j][0]) // 经度从大到小
+                        { 
+                            var tempx = point[i][0];        
+                            point[i][0] = point[j][0];
+                            point[j][0] = tempx;
+
+                            var tempy = point[i][1];        
+                            point[i][1] = point[j][1];
+                            point[j][1] = tempy;
+                        }
+                    }
+                    //alert(point);
+                }
+                //画航线
+                
+                ctx.beginPath();
+                ctx.strokeStyle="red";
+                ctx.lineWidth=2;    
+
+                if(document.getElementById("style").value=="A")
+                {
+                    ctx.moveTo((180+ax) * 2,(90-ay) * 2);
+                    for (var i = 0; i < point.length; i++)
+                    {
+                        ctx.lineTo((180+point[i][0]) * 2,(90-point[i][1]) * 2);  
+                    }
+                    ctx.lineTo((180+bx) * 2,(90-by) * 2);
+                    ctx.stroke();
+                }
+                else if(document.getElementById("style").value=="L")
+                {
+                    var ps=L(ax,ay);
+                    ps[0] = 180+ps[0]/100000;
+                    ps[1] = 90-ps[1]/100000+100;
+                    var pe=L(bx,by);
+                    pe[0] = 180+pe[0]/100000;
+                    pe[1] = 90-pe[1]/100000+100;
+
+                    ctx.moveTo(ps[0] * 2,ps[1] * 2);
+                    for (var i = 0; i < point.length; i++)
+                    {
+                        var lp=L(point[i]);
+                        lp[0] = 180+lp[0]/100000;
+                        lp[1] = 90-lp[1]/100000+100;
+                        ctx.lineTo(lp[0] * 2,lp[1] * 2);  
+                    }
+                    ctx.lineTo(pe[0] * 2,pe[1] * 2);
+                    ctx.stroke();
+                }
+                
+                else if(document.getElementById("style").value=="M")
+                {
+                    var ps=M(ax,ay);
+                    ps[0] = 180+ps[0]/100000+50;
+                    ps[1] = 90-ps[1]/100000+100;
+                    var pe=M(bx,by);
+                    pe[0] = 180+pe[0]/100000+50;
+                    pe[1] = 90-pe[1]/100000+100;
+
+                    ctx.moveTo(ps[0] * 2,ps[1] * 2);
+                    for (var i = 0; i < point.length; i++)
+                    {
+                        var mp=M(point[i]);
+                        mp[0] = 180+mp[0]/100000+50;
+                        mp[1] = 90-mp[1]/100000+100;
+                        ctx.lineTo(mp[0] * 2,mp[1] * 2);  
+                    }
+                    ctx.lineTo(pe[0] * 2,pe[1] * 2);
+                    ctx.stroke();
+                               
+                }
+            }
+            function routepoint(lon1, lat1, lon2, lat2) 
+            {
+                var lon11 = lon1 * Math.PI / 180;//经度
+                var lat11 = lat1 * Math.PI / 180;//纬度
+                var lon22 = lon2 * Math.PI / 180;
+                var lat22 = lat2 * Math.PI / 180;
+                        
+                var Bx = Math.cos(lat22) * Math.cos(lon22 - lon11);
+                var By = Math.cos(lat22) * Math.sin(lon22 - lon11);
+                var latm = Math.atan2(Math.sin(lat11) + Math.sin(lat22), Math.sqrt((Math.cos(lat11) + Bx) * (Math.cos(lat11) + Bx) + By * By));
+                var lonm = lon11 + Math.atan2(By, Math.cos(lat11) + Bx);
+                //return [lonm * 180 / Math.PI, latm * 180 / Math.PI];
+                var lon;
+                var lat;
+                lon=lonm * 180 / Math.PI;
+                lat=latm * 180 / Math.PI;
+
+                if(Math.abs(lon1-lon)>10 )
+                {
+                    routepoint(lon1, lat1, lon, lat);
+                    routepoint(lon, lat, lon2, lat2);
+                }
+
+                var p = new Array(lon,lat);
+                point.push(p);
+
+            }
+
+        </script>
+
+    </body>
+</html>
