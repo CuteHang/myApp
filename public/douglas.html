@@ -1,0 +1,328 @@
+
+<html>
+    <head>
+        <title>
+            Douglas
+        </title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <style>
+        canvas
+        {
+            margin: 10px;
+            border: 1px solid #000000;
+            display:inline;
+        }
+        </style>
+
+        </head>
+
+    <body>
+        
+        <input type="file" name="files" value="选择地图文件" id="path"/>
+        
+        <select id="style">
+            <option value="O">原始地图</option>
+            <option value="D">50%压缩</option>
+        </select>
+        
+        <input type="button" value="显示地图" onclick="onChange()"/>
+        <br>
+    
+        <canvas style="width:900px;height:800px;" id="1"></canvas >
+        
+
+        <script>
+            var e2=0.006693421622;//第一偏心率平方
+            var a=6378245;//长半径
+            var b=6356863.0188;//短半径
+            var yuzhi=1800;
+            var lambertp=[];    //兰伯特转换后坐标
+            var yasuoline=[];   //压缩后的线
+
+            var canvas = document.getElementById('1');
+            var ctx = canvas.getContext('2d');
+            canvas.width = 700;
+            canvas.height = 700;
+
+            var pointsN = 0;
+            var afterN = 0;
+            function onChange(event) 
+            {
+                ctx.clearRect(0,0,canvas.width,canvas.height);//清空画布
+                var file=document.getElementById("path").files;
+                var myfile = file[0];
+                
+                var reader = new FileReader();
+                reader.readAsText(myfile);
+                var content = null;
+                reader.onload = function(event) 
+                {
+                    content=this.result;  
+                    if(document.getElementById("style").value=="O")
+                    {
+                        draw(content);
+                    }
+                    if(document.getElementById("style").value=="D")
+                    {
+                        douglas(content);
+                    }
+                    
+                }
+            }
+
+            function draw(content)
+            {
+                var text=content.split("\r\n");
+                var num=0;//序号
+                var p=0;
+                var canvas = document.getElementById("1");//画布位置
+
+                if(canvas.getContext)
+                {  
+                    var ctx = canvas.getContext("2d");
+
+                    for(var i=0;i<text.length;i++)
+                    {
+                        var now=text[i];
+                        if(now.length<=2)//读到序号
+                        {
+                            continue;
+                        }
+
+                        if(now=="END")
+                        {
+                            ctx.stroke();//关闭当前的绘制路径
+                            num++;
+                            p=0;
+                            continue;
+                        }
+                    
+                        else
+                        {
+                            var point=now.split(",");
+                            //转换为兰伯特投影
+                            point[0] =  parseFloat(point[0]);
+                            point[1] = parseFloat(point[1]);
+                            var pointl = L(point[0],point[1]);
+                            
+                            pointl[0] = 180+pointl[0]/100000;
+                            pointl[1] = 90-pointl[1]/100000;
+
+                            if(p==0)
+                            {
+                                ctx.beginPath();
+                                ctx.strokeStyle="blue";
+                                ctx.lineWidth=1;
+                                ctx.moveTo(pointl[0] * 10-1450 ,pointl[1] * 10 - 230);
+                                p=1;
+                                continue;
+                            }
+                            if(p==1){
+                            ctx.lineTo(pointl[0] * 10-1450,pointl[1] * 10 - 230);
+                            }
+                        }
+                    }
+                }
+            }   
+
+            function douglas(content)
+            {
+                var text=content.split("\r\n");
+                var num=0;          //序号
+                var line=[];        //存储每条线
+                var linenum=0;      //每条线中点的数目
+   
+                var point=[];
+
+                var canvas = document.getElementById("1");  //画布位置
+
+                if(canvas.getContext)
+                {  
+                    var ctx = canvas.getContext("2d");
+
+                    for(var i=0;i<text.length;i++)
+                    {
+                        var now=text[i];
+                        if(now.length<=4 && now!="END")   //读到序号
+                        {
+                            line=[];        //清空数组
+                            continue;
+                        }
+
+                        if(now=="END")
+                        {
+                            judge(line);
+                            pointsN += line.length;
+                            for(var j = 0; j < yasuoline.length; j++)
+                            {
+                                point[0] =  yasuoline[j][0][0];
+                                point[1] = yasuoline[j][0][1];
+                                var pointl=[];
+                                pointl[0] = 180+point[0]/100000;
+                                pointl[1] = 90-point[1]/100000;
+
+                                if(j==0)
+                                {
+                                    ctx.beginPath();
+                                    ctx.strokeStyle="blue";
+                                    ctx.lineWidth=1;
+                                    ctx.moveTo(pointl[0] * 10-1450 ,pointl[1] * 10 - 230);
+                                    continue;
+                                }
+                                else
+                                {
+                                    ctx.lineTo(pointl[0] * 10-1450,pointl[1] * 10 - 230);
+                                }
+
+                                if(j==yasuoline.length-1)
+                                {
+                                    ctx.stroke();
+                                }
+                            }
+                            num++;
+                            linenum=0;
+                            yasuoline=[];
+                            continue;
+                        }
+                    
+                        else
+                        {
+                            var point=now.split(",");
+                            point[0] =  parseFloat(point[0]);
+                            point[1] = parseFloat(point[1]);
+                            //一条线放在一个二维数组中
+                            line[linenum] = [L(point[0],point[1])];
+                            linenum++;
+                        }
+                    }
+                }
+                alert("压缩率："+afterN/pointsN);
+                afterN = 0;
+                pointsN = 0;
+            }   
+
+            function distance(a,b)//ab两点间距离
+            {
+                return Math.sqrt((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1]));
+            }
+
+            function judge(arr)//判断是否为闭合曲线
+            {
+                var t1=arr[0][0];
+                if(arr[0][0][0]==arr[arr.length-1][0][0]&&arr[0][0][1]==arr[arr.length-1][0][1])
+                {
+                    var maxd = 0;
+                    var pk;
+                    for(var i = 1; i < (arr.length-2); i++)
+                    {
+                        var dis = distance(arr[0][0],arr[i][0]);
+                        if(dis > maxd)
+                        {
+                            maxd = dis;
+                            pk = i;
+                        }
+                    }
+                    var arr1=arr.slice(0,pk);
+                    var arr2=arr.slice(pk,arr.length);
+                    changedouglas(arr1);
+                    changedouglas(arr2);
+                }
+                else{
+                    changedouglas(arr);
+                }
+                return arr;
+            }
+
+            function getDistance(a, b, p)//p点到ab的距离 
+            {
+                var A = (b[0][1] - a[0][1]) / Math.sqrt((b[0][1] - a[0][1]) * (b[0][1] - a[0][1]) + (b[0][0] - a[0][0]) * (b[0][0] - a[0][0]));
+                var B = (a[0][0] - b[0][0]) / Math.sqrt((b[0][1] - a[0][1]) * (b[0][1] - a[0][1]) + (b[0][0] - a[0][0]) * (b[0][0] - a[0][0]));
+                var C = (a[0][1] * b[0][0] - a[0][0] * b[0][1]) / Math.sqrt((b[0][1] - a[0][1]) * (b[0][1] - a[0][1]) + (b[0][0] - a[0][0]) * (b[0][0] - a[0][0]));
+                var d = Math.abs(A * p[0][0] + B * p[0][1] + C);
+                return d;
+            }
+
+            
+            function changedouglas(arr)//递归
+            {
+                
+                if(arr.length<=2)//小于2个点停止
+                {
+                    for(var i = 0; i < arr.length; i++)
+                    {
+                        yasuoline.push(arr[i]);
+                        afterN++;
+                    }
+                    return;
+                }
+                
+                var k = 0;      //最远点下标
+                var maxdis = 0; //最远的距离
+                    
+                for (var i = 1; i < arr.length - 1; i++) 
+                {
+                    var dis = getDistance(arr[0], arr[arr.length - 1], arr[i]);
+                    if (dis > maxdis) 
+                    {
+                        maxdis = dis;
+                        k = i;
+                    }
+                }
+                if (maxdis <= yuzhi) 
+                {
+                    yasuoline.push(arr[0]);
+                    yasuoline.push(arr[arr.length - 1]);
+                    afterN +=2;
+                    return;
+                }
+                var left = arr.slice(0, k);
+                var right = arr.slice(k, arr.length);
+                changedouglas(left);
+                changedouglas(right);
+                
+            }
+
+
+            function L(L,B)//兰伯特投影转换
+            {
+                var b0 = 0;                     //原点纬度
+                var b1 = 20 * Math.PI / 180;    //第一标准纬线
+                var b2 = 40 * Math.PI / 180;    //第二标准纬线
+                var l0 = 105 * Math.PI / 180;   //原点经度
+                var e=Math.sqrt(e2);
+
+                B = B * Math.PI / 180;
+                L = L * Math.PI / 180;
+            
+                var X,Y;
+                var r0,r,xita;
+                
+                var m = Math.cos(B) / Math.sqrt(1 - e2 * Math.sin(B) * Math.sin(B));
+                var t = Math.tan(Math.PI / 4 - B / 2) / Math.pow(((1 - e * Math.sin(B)) / (1 + e * Math.sin(B))), e / 2);
+
+                var mb1 = Math.cos(b1) / Math.sqrt(1 - e2 * Math.sin(b1) * Math.sin(b1));
+                var mb2 = Math.cos(b2) / Math.sqrt(1 - e2 * Math.sin(b2) * Math.sin(b2));
+                var tb1 = Math.tan(Math.PI / 4 - b1 / 2) / Math.pow(((1 - e * Math.sin(b1)) / (1 + e * Math.sin(b1))), e / 2);
+                var tb2 = Math.tan(Math.PI / 4 - b2 / 2) / Math.pow(((1 - e * Math.sin(b2)) / (1 + e * Math.sin(b2))), e / 2);
+                
+                var n = Math.log(mb1 / mb2) / Math.log(tb1 / tb2);
+
+                var F = mb1 / (n * Math.pow(tb1, n));
+
+                var r = a * F * Math.pow(t, n);
+
+                xita = n * (L - l0);
+
+                var t0 = Math.tan(Math.PI / 4 - b0 / 2) / Math.pow((1 - e * Math.sin(b0)) / (1 + e * Math.sin(b0)), e / 2);
+                r0 = a * F * Math.pow(t0, n);
+
+                X= r0 - r * Math.cos(xita);
+                Y= r * Math.sin(xita);
+
+                return [Y,X];
+            } 
+
+        </script>
+
+    </body>
+</html>
