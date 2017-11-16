@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            quadtree
+        </title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <style>
+
+    </style>
+
+    </head>
+
+    <body>
+        <input type="file" name="files" value="选择文件" id="path"/>
+        <input type="button" value="提交" onclick="onChange()"/>
+        <br>
+
+        <div id="aa"></div>
+        <div id="bb"></div>
+        
+        <script>
+
+            var list = new Array(8);
+            var result=new Array();
+            function onChange(event) 
+            {
+                var file=document.getElementById("path").files;
+                var myfile = file[0];
+                var reader = new FileReader();
+                reader.readAsText(myfile);
+                var content = null;
+                reader.onload = function(event) 
+                {
+                    content=this.result;  
+                    document.getElementById("aa").innerHTML=("实验数据："+"<br>");
+                    read(content);
+                    code(list,0,"");
+                    document.getElementById("bb").innerHTML=("编码结果："+"<br>");
+                    for(var i = 0; i < result.length; i++)
+                    {
+                        document.getElementById("bb").innerHTML+= ((i+1)+":"+result[i]+"<br>");
+                    }
+                }
+            }
+
+            function read(content)
+            {
+                var text = content.split("\r\n");
+                var num = text[0].split(",");
+                var rown = num[0];
+                var coln = num[1];
+
+                for(var i=1;i<text.length-1;i++)
+                {
+                    var now = text[i];
+                    document.getElementById("aa").innerHTML+=(text[i]+"<br>");
+                    var temp = now.split(",");
+                    var point = temp.slice(0,8)
+                    list[i-1] = point;
+                }
+                //alert(list);
+            }
+
+            function code(arr,lay,lastcode)
+            {
+                var l = arr.length;
+                var NW = new Array();
+                var NE = new Array();
+                var SW = new Array();
+                var SE = new Array();
+
+                for(var i = 0; i < l/2; i++)
+                {
+                    var temp=new Array();
+                    for(var j = 0; j < l/2; j++)
+                    {
+                        temp.push(arr[i][j]);
+                    }
+                    NW.push(temp);
+                }
+
+                for(var i = 0; i < l/2; i++)
+                {
+                    var temp=new Array();
+                    for(var j = l/2; j < l; j++)
+                    {
+                        temp.push(arr[i][j]);
+                    }
+                    NE.push(temp);
+                }
+
+                for(var i = l/2; i < l; i++)
+                {
+                    var temp=new Array();
+                    for(var j = 0; j < l/2; j++)
+                    {
+                        temp.push(arr[i][j]);
+                    }
+                    SW.push(temp);
+                }
+                for(var i = l/2; i < l; i++)
+                {
+                    var temp=new Array();
+                    for(var j = l/2; j < l; j++)
+                    {
+                        temp.push(arr[i][j]);
+                    }
+                    SE.push(temp);
+                }
+
+                if(compare(NW) == 0)
+                {
+                    code(NW,lay+1,lastcode+"0");
+                }
+                else
+                {
+                    result.push("("+lastcode+"0"+","+(lay+1)+","+NW[0][0]+")");
+                }
+                if(compare(NE) == 0)
+                {
+                    code(NE,lay+1,lastcode+"1");
+                }
+                else
+                {
+                    result.push("("+lastcode+"1"+","+(lay+1)+","+NE[0][0]+")");
+                }
+                if(compare(SW) == 0)
+                {
+                    code(SW,lay+1,lastcode+"2");
+                }
+                else
+                {
+                    result.push("("+lastcode+"2"+","+(lay+1)+","+SW[0][0]+")");
+                }
+                if(compare(SE) == 0)
+                {
+                    code(SE,lay+1,lastcode+"3");
+                }
+                else
+                {
+                    result.push("("+lastcode+"3"+","+(lay+1)+","+SE[0][0]+")");
+                }
+            }
+            function compare(arr)
+            {
+                var l = arr.length;
+                var temp = arr[0][0];
+
+                for(var i = 0; i < l; i++)
+                {
+                    for(var j = 0; j < l; j++)
+                    {
+                        if(arr[i][j] != temp)
+                        {
+                            return 0;
+                        }
+                    }
+                }
+                return 1;
+            }
+
+        </script>
+
+    </body>
+</html>
